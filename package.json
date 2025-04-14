@@ -1,0 +1,25 @@
+{
+  "name": "webpack-federation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:shared": "pnpm --filter shared run start",
+    "build:shared": "pnpm --filter shared run build",
+    "start:app1": "pnpm --filter app1 run start",
+    "build:app1": "pnpm --filter app1 run build",
+    "start:app2": "pnpm --filter app2 run start",
+    "build:app2": "pnpm --filter app2 run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.1",
+  "devDependencies": {
+    "html-webpack-plugin": "^5.6.3",
+    "serve": "^14.2.4",
+    "webpack": "^5.99.5",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
+  }
+}

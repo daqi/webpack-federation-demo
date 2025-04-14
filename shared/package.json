@@ -1,0 +1,22 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --progress --color",
+    "start": "webpack-dev-server --progress --color"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.1",
+  "devDependencies": {
+    "@my/core": "workspace:*"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  }
+}
