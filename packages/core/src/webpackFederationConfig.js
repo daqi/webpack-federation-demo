@@ -3,11 +3,14 @@ const { NormalModuleReplacementPlugin } = require("webpack");
 const path = require("path");
 const fs = require("fs");
 
-const getSharedServices = async () => [
+const get3rdServices = async () => [
   {
     url: "http://localhost:3000/version.json",
     name: "shared_vendors",
   },
+];
+
+const get2ndServices = async () => [
   {
     url: "http://localhost:3002/version.json",
     name: "app2",
@@ -21,32 +24,33 @@ const getRemoteModules = async ({ remote, packageName }) => {
       replacePlugins: [],
     };
   }
-  const sharedServices = await getSharedServices();
-  const allVersions = (
-    await Promise.all(
-      sharedServices.map((sharedService) => {
-        // 如果是当前包，则不需要请求
-        if (sharedService.name === packageName) {
-          return null;
-        }
-        // 请求共享模块的版本信息
-        return fetch(sharedService.url)
-          .then((response) => response.json())
-          .catch(() => {
-            console.error(
-              `无法访问共享模块 ${sharedService.name}，请确保它正在运行。`
-            );
-            process.exit(1);
-          });
-      })
-    )
-  ).filter(Boolean);
+  const shared3rdServices = await get3rdServices();
+  const shared2ndServices = await get2ndServices();
+
+  const fetchService = async (services) => {
+    return (await Promise.all(services.map((service) => {
+      // 如果是当前包，则不需要请求
+      if (service.name === packageName) {
+        return null;
+      }
+      // 请求共享模块的版本信息
+      return fetch(service.url)
+        .then((response) => response.json())
+        .catch(() => {
+          console.error(`无法访问共享模块 ${service.name}，请确保它正在运行。`);
+          process.exit(1);
+        });
+    }))).filter(Boolean);
+  };
+
+  const all3rdVersions = await fetchService(shared3rdServices)
+  const all2ndVersions = await fetchService(shared2ndServices)
 
   const replacePlugins = [];
   const remotes = {};
 
   // 从packages数组构建正则表达式模式
-  allVersions.forEach((version) => {
+  all3rdVersions.forEach((version) => {
     const packagesPattern = version.packages
       .map((pkg) => pkg.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")) // 转义特殊正则字符
       .join("|");
@@ -65,11 +69,7 @@ const getRemoteModules = async ({ remote, packageName }) => {
       new NormalModuleReplacementPlugin(
         modulesRegex, // 匹配需要替换的模块
         (resource) => {
-          // 提取基础模块名称
-          const moduleName = resource.request.split("/")[0];
-          const remainder = resource.request.slice(moduleName.length);
-
-          if (version.packages.includes(moduleName)) {
+          if (version.packages.includes(resource.request)) {
             console.log(
               `替换: ${resource.request} -> ${version.name}/${resource.request}`
             );
@@ -78,6 +78,11 @@ const getRemoteModules = async ({ remote, packageName }) => {
         }
       )
     );
+  });
+
+  all2ndVersions.forEach((version) => {
+    // 添加远程模块
+    remotes[version.name] = `${version.name}@${version.url}`;
   });
 
   console.log("远程模块:", remotes);
